@@ -5,7 +5,8 @@
       "sample_size": [2, 3, 224, 224]
     },
     "num_classes": 1000,
-    "batch_size" : 256,
+    // "batch_size" : 256,
+    "batch_size" : 128,
     "epochs": 5,
     "optimizer": {
         "type": "Adam",

@@ -31,6 +31,7 @@ from functools import partial
 from shutil import copyfile
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision.datasets import CIFAR10, CIFAR100
+from validate_dataset import ValidateDataset
 
 from examples.common.argparser import get_common_argument_parser
 from examples.common.distributed import configure_distributed
@@ -264,8 +265,14 @@ def load_resuming_checkpoint(resuming_checkpoint_path: str):
 
 def get_dataset(dataset_config, config, transform, is_train):
     if dataset_config == 'imagenet':
-        prefix = 'train' if is_train else 'val'
-        return datasets.ImageFolder(osp.join(config.dataset_dir, prefix), transform)
+        # prefix = 'train' if is_train else 'val'
+        # return datasets.ImageFolder(osp.join(config.dataset_dir, prefix), transform)
+        if is_train:
+            prefix = 'train'
+            return datasets.ImageFolder(osp.join(config.dataset_dir, prefix), transform)
+        else:
+            prefix = 'val'
+            return ValidateDataset(osp.join(config.dataset_dir, prefix), transform)
     return create_cifar(config, dataset_config, is_train, transform)
 
 
@@ -298,15 +305,6 @@ def create_datasets(config):
     input_info_list = create_input_infos(config)
     image_size = input_info_list[0].shape[-1]
     size = int(image_size / 0.875)
-    val_transform = transforms.Compose([
-        transforms.Resize(size),
-        transforms.CenterCrop(image_size),
-        transforms.ToTensor(),
-        normalize,
-    ])
-
-    val_dataset = get_dataset(dataset_config, config, val_transform, is_train=False)
-
     train_transforms = transforms.Compose([
         transforms.RandomResizedCrop(image_size),
         transforms.RandomHorizontalFlip(),
@@ -315,6 +313,15 @@ def create_datasets(config):
     ])
 
     train_dataset = get_dataset(dataset_config, config, train_transforms, is_train=True)
+
+    val_transform = transforms.Compose([
+        transforms.Resize(size),
+        transforms.CenterCrop(image_size),
+        transforms.ToTensor(),
+        normalize,
+    ])
+
+    val_dataset = get_dataset(dataset_config, config, val_transform, is_train=False)
 
     return train_dataset, val_dataset
 
